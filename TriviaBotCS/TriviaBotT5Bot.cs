@@ -92,19 +92,7 @@ namespace TriviaBotT5
                 var context = turnContext;
                 // Fetch the members in the current conversation
                 var connector = new ConnectorClient(new Uri(context.Activity.ServiceUrl));
-                var members = await connector.Conversations.GetConversationMembersAsync(context.Activity.Conversation.Id);
-
-                /*
-                 * {
-  "teamId": "string",
-  "members": [
-    {
-      "id": "string",
-      "name": "string"
-    }
-  ]
-} */
-              
+                var members = await connector.Conversations.GetConversationMembersAsync(context.Activity.Conversation.Id);     
 
                 TeamsChannelData channelData = turnContext.Activity.GetChannelData<TeamsChannelData>();
 
