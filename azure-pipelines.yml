@@ -19,7 +19,7 @@ steps:
     command: 'restore'
     projects: '**/*.csproj'
     #verbosityRestore: 'detailed' # Options: quiet, minimal, normal, detailed, diagnostic
-- script: dotnet build "TriviaBotCS/TriviaBotT5.sln" --configuration $(buildConfiguration)
+- script: dotnet build "TriviaBotCS/TriviaBotT5.sln" --configuration $(buildConfiguration) --output $(build.artifactstagingdirectory)\artifact
   displayName: 'dotnet build $(buildConfiguration)'
   
 - task: PublishBuildArtifacts@1
