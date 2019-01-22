@@ -14,6 +14,8 @@ using Microsoft.Bot.Connector;
 using Microsoft.Bot.Schema;
 using Microsoft.Bot.Schema.Teams;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace TriviaBotT5
 {
@@ -269,6 +271,9 @@ namespace TriviaBotT5
             await turnContext.SendActivityAsync(reply, cancellationToken);
         }
 
+        /// <summary></summary>
+        /// <param name="context"></param>
+        /// <param name="cancellationToken"></param>
         private static async Task GetNextQuestionAsync(ITurnContext context, CancellationToken cancellationToken)
         {
             // Fetch the members in the current conversation
@@ -283,9 +288,45 @@ namespace TriviaBotT5
             sb.Append("}");
 
             var client = new HttpClient();
-            await client.PostAsync("https://msopenhack.azurewebsites.net/api/trivia/register",
+            var httpResponseMessage = await client.PostAsync("https://msopenhack.azurewebsites.net/api/trivia/question",
                 new StringContent(sb.ToString()));
 
+
+            string respJson = await httpResponseMessage.Content.ReadAsStringAsync();
+
+            JObject jObj = JsonConvert.DeserializeObject<JObject>(respJson);
+
+        }
+
+
+        /// <summary>Submits the question answer asynchronous.</summary>
+        /// <param name="context">The context.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns></returns>
+        private static async Task SubmitQuestionAnswerAsync(ITurnContext context, CancellationToken cancellationToken)
+        {
+            // Fetch the members in the current conversation
+            var connector = new ConnectorClient(new Uri(context.Activity.ServiceUrl));
+            var members = await connector.Conversations.GetConversationMembersAsync(context.Activity.Conversation.Id);
+
+            var Id = context.Activity.Recipient.Id;
+            var questionId = "";
+            var answerId = "";
+            var sb = new StringBuilder();
+            sb.Append("{");
+            sb.Append("  \"userId\": \"\"" + Id + "\"");
+            sb.Append("  \"questionId\": \"\"" + questionId + "\"");
+            sb.Append("  \"answerId\": \"\"" + answerId + "\"");
+            sb.Append("}");
+
+            var client = new HttpClient();
+            var httpResponseMessage = await client.PostAsync("https://msopenhack.azurewebsites.net/api/trivia/answer",
+                new StringContent(sb.ToString()));
+
+
+            string respJson = await httpResponseMessage.Content.ReadAsStringAsync();
+
+            JObject jObj = JsonConvert.DeserializeObject<JObject>(respJson);
 
         }
 
