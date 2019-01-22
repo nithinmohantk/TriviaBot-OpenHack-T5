@@ -5,6 +5,7 @@
 
 trigger:
 - master
+- firstTry
 
 pool:
   vmImage: 'Ubuntu-16.04'
