@@ -24,14 +24,14 @@ namespace TriviaBotT5
                     // Logging Options.
                     // There are other logging options available:
                     // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-2.1
-                    // logging.AddDebug();
-                    // logging.AddConsole();
+                     logging.AddDebug();
+                     logging.AddConsole();
                 })
 
                 // Logging Options.
                 // Consider using Application Insights for your logging and metrics needs.
                 // https://azure.microsoft.com/en-us/services/application-insights/
-                // .UseApplicationInsights()
+                .UseApplicationInsights("a767fa8c-4f7e-4294-994b-184e393497b4")
                 .UseStartup<Startup>()
                 .Build();
     }

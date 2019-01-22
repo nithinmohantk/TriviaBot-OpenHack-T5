@@ -2,7 +2,7 @@
   "$schema": "https://statics.teams.microsoft.com/sdk/v1.2/manifest/MicrosoftTeams.schema.json",
   "manifestVersion": "1.2",
   "version": "0.0.1",
-  "id": "9a3fa3a7-7c9f-434f-866a-22af5f9b65ab",
+  "id": "1a9ad3ed-46dc-4f0a-b3ce-93401b7a940e",
   "packageName": "com.ctrlaltelite.teams.app01",
   "developer": {
     "name": "",
@@ -45,7 +45,7 @@
   ],
   "bots": [
     {
-      "botId": "9a3fa3a7-7c9f-434f-866a-22af5f9b65ab",
+      "botId": "1a9ad3ed-46dc-4f0a-b3ce-93401b7a940e",
       "scopes": [
         "personal",
         "team"

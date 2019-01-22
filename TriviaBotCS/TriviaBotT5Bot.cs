@@ -1,10 +1,15 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
+using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Bot.Builder;
+using Microsoft.Bot.Connector;
 using Microsoft.Bot.Schema;
+using Microsoft.Bot.Schema.Teams;
 using Microsoft.Extensions.Logging;
 
 namespace TriviaBotT5
@@ -78,6 +83,54 @@ namespace TriviaBotT5
                 // Echo back to the user whatever they typed.
                 var responseMessage = $"Turn {state.TurnCount}: You sent '{turnContext.Activity.Text}'\n";
                 await turnContext.SendActivityAsync(responseMessage);
+            }
+            else if( turnContext.Activity.Type == ActivityTypes.InstallationUpdate)
+            {
+                var responseMessage = $"Installation Update '{turnContext.Activity.Text}'\n";
+                await turnContext.SendActivityAsync(responseMessage);
+
+                var context = turnContext;
+                // Fetch the members in the current conversation
+                var connector = new ConnectorClient(new Uri(context.Activity.ServiceUrl));
+                var members = await connector.Conversations.GetConversationMembersAsync(context.Activity.Conversation.Id);
+
+                /*
+                 * {
+  "teamId": "string",
+  "members": [
+    {
+      "id": "string",
+      "name": "string"
+    }
+  ]
+} */
+              
+
+                TeamsChannelData channelData = turnContext.Activity.GetChannelData<TeamsChannelData>();
+
+                if (channelData != null)
+                {
+                    var teamId = channelData.Team.Id;
+                    var sb = new StringBuilder();
+                    sb.Append("{");
+                    sb.Append("  \"teamId\": \"\"" + teamId + "\"");
+                    sb.Append("  \"members\": [");
+                    // Concatenate information about all members into a string
+                    foreach (var member in members)
+                    {
+                        sb.Append($"{{\"id\": \"{member.Id}\", \"name\" = \"{member.Name}\"}}");
+                        sb.AppendLine();
+                    }
+                    sb.Append("]}");
+
+                    var client = new HttpClient();
+                    await client.PostAsync("https://msopenhack.azurewebsites.net/api/trivia/register",
+                        new StringContent(sb.ToString()));
+
+                    await turnContext.SendActivityAsync($"Team Roster Updated");
+                }
+
+
             }
             else
             {
