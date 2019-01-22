@@ -6,6 +6,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Bot.Builder;
+using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Builder.Integration;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Configuration;
@@ -133,7 +134,8 @@ namespace TriviaBotT5
                 var accessors = new TriviaBotT5Accessors(conversationState)
                {
                    CounterState = conversationState.CreateProperty<CounterState>(TriviaBotT5Accessors.CounterStateName),
-               };
+                   ConversationDialogState = conversationState.CreateProperty<DialogState>("DialogState")
+                };
 
                return accessors;
            });

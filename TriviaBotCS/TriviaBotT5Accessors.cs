@@ -3,6 +3,7 @@
 
 using System;
 using Microsoft.Bot.Builder;
+using Microsoft.Bot.Builder.Dialogs;
 
 namespace TriviaBotT5
 {
@@ -30,6 +31,10 @@ namespace TriviaBotT5
         /// <remarks>Accessors require a unique name.</remarks>
         /// <value>The accessor name for the counter accessor.</value>
         public static string CounterStateName { get; } = $"{nameof(TriviaBotT5Accessors)}.CounterState";
+
+
+        // Conversation state is of type DialogState. Under the covers this is a serialized dialog stack.
+        public IStatePropertyAccessor<DialogState> ConversationDialogState { get; set; }
 
         /// <summary>
         /// Gets or sets the <see cref="IStatePropertyAccessor{T}"/> for CounterState.

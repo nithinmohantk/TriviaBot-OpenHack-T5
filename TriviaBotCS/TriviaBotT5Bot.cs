@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Bot.Builder;
+using Microsoft.Bot.Builder.Dialogs;
+using Microsoft.Bot.Builder.Dialogs.Choices;
 using Microsoft.Bot.Connector;
 using Microsoft.Bot.Schema;
 using Microsoft.Bot.Schema.Teams;
@@ -33,6 +35,14 @@ namespace TriviaBotT5
 
         public const string WelcomeText = @"Please answer the questions as it appears in your chat window:";
 
+
+        static List<Choice> choices = new List<Choice>();
+       
+        /// <summary>
+        /// The <see cref="DialogSet"/> that contains all the Dialogs that can be used at runtime.
+        /// </summary>
+        static DialogSet _dialogs;
+
         /// <summary>
         /// Initializes a new instance of the class.
         /// </summary>
@@ -49,6 +59,19 @@ namespace TriviaBotT5
             _logger = loggerFactory.CreateLogger<TriviaBotT5Bot>();
             _logger.LogTrace("Turn start.");
             _accessors = accessors ?? throw new System.ArgumentNullException(nameof(accessors));
+
+            choices.Add(new Choice
+            {
+                Value = "Plain Pizza",
+                Synonyms = new List<string> { "plain" }
+            });
+            choices.Add(new Choice { Value = "Pizza with Pepperoni", Synonyms = new List<string> { "4 Day", "workshop", "full" } });
+            choices.Add(new Choice { Value = "Pizza with Mushrooms", Synonyms = new List<string> { "mushroom", "mushrooms", "shrooms" } });
+            choices.Add(new Choice { Value = "Pizza with Peppers, Mushrooms and Brocolli", Synonyms = new List<string> { "vegtable", "veggie" } });
+            choices.Add(new Choice { Value = "Pizza with Anchovies" });
+
+            _dialogs = new DialogSet(accessors.ConversationDialogState);
+            _dialogs.Add(new ChoicePrompt("choices"));
         }
 
         /// <summary>
@@ -91,21 +114,52 @@ namespace TriviaBotT5
             // Handle Message activity type, which is the main activity type for shown within a conversational interface
             // Message activities may contain text, speech, interactive cards, and binary or unknown attachments.
             // See https://aka.ms/about-bot-activity-message to learn more about the message and other activity types
+            /* if (turnContext.Activity.Type == ActivityTypes.Message)
+             {
+                 // Extract the text from the message activity the user sent.
+                 // Make this lowercase not accounting for culture in this case
+                 // so that there are fewer string variations which you will
+                 // have to account for in your bot.
+                 var text = turnContext.Activity.Text.ToLowerInvariant();
+
+                 // Take the input from the user and create the appropriate response.
+                 var responseText = ProcessInput(text);
+
+                 // Respond to the user.
+                 await turnContext.SendActivityAsync(responseText, cancellationToken: cancellationToken);
+
+                 await SendSuggestedActionsAsync(turnContext, cancellationToken);
+             } */
+            // Handle Message activity type, which is the main activity type for shown within a conversational interface
+            // Message activities may contain text, speech, interactive cards, and binary or unknown attachments.
+            // see https://aka.ms/about-bot-activity-message to learn more about the message and other activity types
             if (turnContext.Activity.Type == ActivityTypes.Message)
             {
-                // Extract the text from the message activity the user sent.
-                // Make this lowercase not accounting for culture in this case
-                // so that there are fewer string variations which you will
-                // have to account for in your bot.
-                var text = turnContext.Activity.Text.ToLowerInvariant();
+                // Run the DialogSet - let the framework identify the current state of the dialog from
+                // the dialog stack and figure out what (if any) is the active dialog.
+                var dialogContext = await _dialogs.CreateContextAsync(turnContext, cancellationToken);
+                var results = await dialogContext.ContinueDialogAsync(cancellationToken);
 
-                // Take the input from the user and create the appropriate response.
-                var responseText = ProcessInput(text);
+                // If the DialogTurnStatus is Empty we should start a new dialog.
+                if (results.Status == DialogTurnStatus.Empty)
+                {
+                    // A prompt dialog can be started directly on the DialogContext. The prompt text is given in the PromptOptions.
+                    await dialogContext.PromptAsync(
+                        "choices",
+                        new PromptOptions { Prompt = MessageFactory.Text("Please answer the trivia question."), Choices = choices },
+                        cancellationToken);
+                }
 
-                // Respond to the user.
-                await turnContext.SendActivityAsync(responseText, cancellationToken: cancellationToken);
-
-                await SendSuggestedActionsAsync(turnContext, cancellationToken);
+                // We had a dialog run (it was the prompt). Now it is Complete.
+                else if (results.Status == DialogTurnStatus.Complete)
+                {
+                    // Check for a result.
+                    if (results.Result != null)
+                    {
+                        // Finish by sending a message to the user. Next time ContinueAsync is called it will return DialogTurnStatus.Empty.
+                        await turnContext.SendActivityAsync(MessageFactory.Text($"Thank you, I have your answer as '{results.Result}'."));
+                    }
+                }
             }
             else if (turnContext.Activity.Type == ActivityTypes.ConversationUpdate)
             {
@@ -155,6 +209,9 @@ namespace TriviaBotT5
             {
                 await turnContext.SendActivityAsync($"{turnContext.Activity.Type} event detected");
             }
+
+            // Save the new turn count into the conversation state.
+            await _accessors.ConversationState.SaveChangesAsync(turnContext, false, cancellationToken);
         }
 
 
@@ -175,7 +232,13 @@ namespace TriviaBotT5
                     await turnContext.SendActivityAsync(
                         $"Welcome to Trivia Bot(T5) Assistant, {member.Name}.                                                    {WelcomeText}",
                         cancellationToken: cancellationToken);
-                    await SendSuggestedActionsAsync(turnContext, cancellationToken);
+
+                    var dialogContext = await _dialogs.CreateContextAsync(turnContext, cancellationToken);
+                    await dialogContext.PromptAsync(
+                       "choices",
+                       new PromptOptions { Prompt = MessageFactory.Text("Please answer the trivia question."), Choices = choices },
+                       cancellationToken);
+                    //await SendSuggestedActionsAsync(turnContext, cancellationToken);
                 }
             }
         }
