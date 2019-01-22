@@ -136,8 +136,9 @@ namespace TriviaBotT5
                };
 
                return accessors;
-           }); 
+           });
 
+   
             services.AddMvc(); // Required by Razor pages
         }
 
