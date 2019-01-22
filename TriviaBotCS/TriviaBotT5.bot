@@ -1,18 +1,26 @@
 {
     "name": "TriviaBotT5",
     "description": "",
-    "services": [
-        {
-            "type": "endpoint",
-            "appId": "",
-            "appPassword": "",
-            "endpoint": "http://localhost:9000/api/messages",
-            "id": "2c627120-1e40-11e9-98c2-97e052b1bfcd",
-            "name": "http://localhost:9000/api/messages"
-        }
-    ],
+  "services": [
+    {
+      "type": "endpoint",
+      "appId": "",
+      "appPassword": "",
+      "endpoint": "http://localhost:3978/api/messages",
+      "id": "2c627120-1e40-11e9-98c2-97e052b1bfcd",
+      "name": "development"
+    },
+    {
+      "type": "endpoint",
+      "appId": "1a9ad3ed-46dc-4f0a-b3ce-93401b7a940e",
+      "appPassword": "rsNLES12(]-tnnsqYDG087=",
+      "endpoint": "https://triviabott5v2.azurewebsites.net/api/messages",
+      "id": "9a3fa3a7-7c9f-434f-866a-22af5f9b65ab",
+      "name": "production"
+    }
+  ],
     "padlock": "",
     "version": "2.0",
-    "overrides": null,
-    "path": "\\\\ielett12kf50\\X216232$\\Desktop\\MS Open Hack\\TriviaBotT5.bot"
+    "overrides": null
+   
 }

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://statics.teams.microsoft.com/sdk/v1.2/manifest/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.2",
+  "version": "0.0.1",
+  "id": "9a3fa3a7-7c9f-434f-866a-22af5f9b65ab",
+  "packageName": "com.ctrlaltelite.teams.app01",
+  "developer": {
+    "name": "",
+    "websiteUrl": "https://www.github.com/ctrlaltelite/teams-app-net-core-sample",
+    "privacyUrl": "https://www.github.com/ctrlaltelite/teams-app-net-core-sample/README.md",
+    "termsOfUseUrl": "https://www.github.com/ctrlaltelite/teams-app-net-core-sample/LICENSE"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "Trivia Bot T5",
+    "full": "Trivia Bot - Team 5"
+  },
+  "description": {
+    "short": "Trivia Bot for Ctrl Alt Elite Team",
+    "full": "An app for communicating to teams."
+  },
+  "accentColor": "#00FF00",
+  "configurableTabs": [
+  ],
+  "staticTabs": [
+    {
+      "entityId": "index",
+      "name": "Index",
+      "contentUrl": "https://triviabott5v2.azurewebsites.net/",
+      "scopes": [
+        "personal"
+      ]
+    },
+    {
+      "entityId": "auth",
+      "name": "Authentication",
+      "contentUrl": "https://triviabott5v2.azurewebsites.net/Auth",
+      "scopes": [
+        "personal"
+      ]
+    }
+  ],
+  "bots": [
+    {
+      "botId": "9a3fa3a7-7c9f-434f-866a-22af5f9b65ab",
+      "scopes": [
+        "personal",
+        "team"
+      ]
+    }
+  ],
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "validDomains": [
+    "*.azurewebsites.net"
+  ]
+}

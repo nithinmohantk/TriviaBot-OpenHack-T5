@@ -114,7 +114,7 @@ namespace TriviaBotT5
 
             // Create and register state accessors.
             // Accessors created here are passed into the IBot-derived class on every turn.
-            services.AddSingleton<TriviaBotT5Accessors>(sp =>
+           services.AddSingleton<TriviaBotT5Accessors>(sp =>
            {
                var options = sp.GetRequiredService<IOptions<BotFrameworkOptions>>().Value;
                if (options == null)
@@ -136,7 +136,9 @@ namespace TriviaBotT5
                };
 
                return accessors;
-           });
+           }); 
+
+            services.AddMvc(); // Required by Razor pages
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
@@ -145,6 +147,7 @@ namespace TriviaBotT5
 
             app.UseDefaultFiles()
                 .UseStaticFiles()
+                .UseMvc() // Required by Razor pages
                 .UseBotFramework();
         }
     }
