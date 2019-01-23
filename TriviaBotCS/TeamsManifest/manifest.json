@@ -25,7 +25,7 @@
   "accentColor": "#00FF00",
   "configurableTabs": [
     {
-      "configurationUrl": "https://triviabott5v2.azurewebsites.net/Leaderboard/configure",
+      "configurationUrl": "https://triviabott5v2.azurewebsites.net/Leaderboard/Configure",
       "canUpdateConfiguration": true,
       "scopes": [
         "team"

@@ -1,5 +1,5 @@
 ﻿@page
-@using  TeamsAppSample.NETCore.Pages.Auth
+@using  TeamsAppSample.NETCore.Pages.Leaderboard
 @model ConfigureModel
 @{
     ViewData["Title"] = "Configure Leaderboard";
@@ -14,22 +14,22 @@
 
     microsoftTeams.settings.registerOnSaveHandler(function (saveEvent) {
 
-        var radios = document.getElementsByName("maptype");
+        var radios = document.getElementsByName("boardtype");
         if (radios[0].checked) {
             microsoftTeams.settings.setSettings({
-                entityId: "bing",
-                contentUrl: "https://www.bing.com/maps/embed",
-                suggestedDisplayName: "Bing Map",
-                websiteUrl: "https://www.bing.com/maps",
-                removeUrl: "https://teams-get-started-sample.azurewebsites.net/tabremove.html",
+                entityId: "user",
+                contentUrl: "https://triviabott5v2.azurewebsites.net/Leaderboard/user",  
+                suggestedDisplayName: "Individual Leaderboard",
+                websiteUrl: "https://triviabott5v2.azurewebsites.net/Leaderboard/user",
+                removeUrl: "https://triviabott5v2.azurewebsites.net/Leaderboard/user",
             });
         } else {
             microsoftTeams.settings.setSettings({
-                entityId: "google",
-                contentUrl: "https://www.google.com/maps/embed",
-                suggestedDisplayName: "Google Map",
-                websiteUrl: "https://www.google.com/maps",
-                removeUrl: "https://teams-get-started-sample.azurewebsites.net/tabremove.html",
+                entityId: "team",
+                contentUrl: "https://triviabott5v2.azurewebsites.net/Leaderboard/team",
+                suggestedDisplayName: "Team Leaderboard",
+                websiteUrl: "https://triviabott5v2.azurewebsites.net/Leaderboard/team",
+                removeUrl: "https://triviabott5v2.azurewebsites.net/Leaderboard/team",
             });
         }
 
@@ -99,8 +99,9 @@
 
 <p>
     <form>
-    <input type="radio" name="maptype" value="bing" onclick="onClick()"> Bing Maps<br>
-    <input type="radio" name="maptype" value="google" onclick="onClick()"> Google Maps
+    Select Leaderboard Type:
+    <input type="radio" name="boardtype" value="user" onclick="onClick()"> Individual<br>
+    <input type="radio" name="boardtype" value="team" onclick="onClick()"> Team
     </form>
 </p>
 

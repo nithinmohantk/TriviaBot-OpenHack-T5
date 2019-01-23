@@ -21,7 +21,7 @@ namespace TeamsAppSample.NETCore.Pages
             get
             {
 #if DEBUG
-                return Configuration["MicrosoftAppId"];
+                return Configuration["TabMicrosoftAppId"];
 #else
                 return "None of your business";
 #endif
@@ -34,12 +34,14 @@ namespace TeamsAppSample.NETCore.Pages
             get
             {
 #if DEBUG
-                return Configuration["MicrosoftAppPassword"];
+                return Configuration["TabMicrosoftAppPassword"];
 #else
                 return "Also none of your business";
 #endif
             }
         }
+
+
 
         private IConfiguration Configuration
         {
