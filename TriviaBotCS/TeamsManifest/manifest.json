@@ -25,7 +25,7 @@
   "accentColor": "#00FF00",
   "configurableTabs": [
     {
-      "configurationUrl": "https://triviabott5v2.azurewebsites.net/Leaderboard/Configure",
+      "configurationUrl": "https://triviabott5v2.azurewebsites.net/Leaderboard/Configure?name={loginHint}&tenant={tid}&group={groupId}&theme={theme}&teamId={teamId}&teamName={teamName}&channelId={channelId}&entityId={entityId}&subEntityId={subEntityId}&userObjectId={userObjectId}&userPrincipalName={userPrincipalName}&channelName={channelName}&locale={locale}",
       "canUpdateConfiguration": true,
       "scopes": [
         "team"

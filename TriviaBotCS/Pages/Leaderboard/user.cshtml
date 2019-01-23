@@ -1,8 +1,299 @@
 ﻿@page
 @model TriviaBotT5.Pages.Leaderboard.userModel
 @{
-    ViewData["Title"] = "user";
+    ViewData["Title"] = "Individual Leaderboard";
 }
+<script src="https://code.jquery.com/jquery-3.1.1.js" integrity="sha384-VC7EHu0lDzZyFfmjTPJq+DFyIn8TUGAJbEtpXquazFVr00Q/OOx//RjiZ9yU9+9m" crossorigin="anonymous"></script>
+<!-- Microsoft Teams JavaScript API (via CDN) -->
+<script src="https://unpkg.com/@@microsoft/teams-js@1.3.4/dist/MicrosoftTeams.min.js" integrity="sha384-3zTjxw3msc6gKx3DseSU0lfRM129YrFjr2xgocfMIN/kBCdzJ88d+FSB1n3scUku" crossorigin="anonymous"></script>
+<style>
 
-<h2>I am an user</h2>
+    table {
+        border: 1px solid #1C6EA4;
+        background-color: #EEEEEE;
+        width: 100%;
+        text-align: left;
+        border-collapse: collapse;
+    }
 
+        table td, table th {
+            border: 1px solid #AAAAAA;
+            padding: 3px 2px;
+        }
+
+        table tbody td {
+            font-size: 13px;
+        }
+
+        table tr:nth-child(even) {
+            background: #D0E4F5;
+        }
+
+        table thead {
+            background: #1C6EA4;
+            background: -moz-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+            background: -webkit-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+            background: linear-gradient(to bottom, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
+            border-bottom: 2px solid #444444;
+        }
+
+            table thead th {
+                font-size: 15px;
+                font-weight: bold;
+                color: #FFFFFF;
+                border-left: 2px solid #D0E4F5;
+            }
+
+                table thead th:first-child {
+                    border-left: none;
+                }
+
+        table tfoot {
+            font-size: 14px;
+            font-weight: bold;
+            color: #FFFFFF;
+            background: #D0E4F5;
+            background: -moz-linear-gradient(top, #dcebf7 0%, #d4e6f6 66%, #D0E4F5 100%);
+            background: -webkit-linear-gradient(top, #dcebf7 0%, #d4e6f6 66%, #D0E4F5 100%);
+            background: linear-gradient(to bottom, #dcebf7 0%, #d4e6f6 66%, #D0E4F5 100%);
+            border-top: 2px solid #444444;
+        }
+
+            table tfoot td {
+                font-size: 14px;
+            }
+
+            table tfoot .links {
+                text-align: right;
+            }
+
+                table tfoot .links a {
+                    display: inline-block;
+                    background: #1C6EA4;
+                    color: #FFFFFF;
+                    padding: 2px 8px;
+                    border-radius: 5px;
+                }
+</style>
+<h2>Welcome to <span id="teamName"></span> Dashboard</h2>
+
+<script type="text/javascript">
+
+    var accessToken = '';
+    microsoftTeams.initialize();
+
+    microsoftTeams.authentication.authenticate({
+        url: window.location.origin + "/Leaderboard/InitiateAuthFlow",
+
+        successCallback: function (result) {
+            getUserProfile(result.accessToken);
+            accessToken = result.accessToken;
+            $('#hdnAccessToken').val(result.accessToken);
+        },
+        failureCallback: function (reason) {
+            handleAuthError(reason);
+        }
+    });
+
+    microsoftTeams.getContext(function (context) {
+        //alert("getcontext call back function");
+        this.teamName = context.teamName;
+
+        $('#teamName').html("Individual");
+        this.groupID = context.groupId;
+        this.teamID = context.teamId;
+        console.log(context);
+        login(context);
+        
+    });
+
+
+  //https://graph.microsoft.com/v1.0/users/alans@CIE493742.onmicrosoft.com/photo/$value
+    function setupLeaderBoard(context) {
+
+        var postData = {
+            "teamId": context.teamId,
+            "channelId": context.channelId,
+            "locale": context.locale,
+            "theme": context.theme,
+            "entityId": "user",//context.entityId,
+            "subEntityId": context.subEntityId,
+            "upn": context.userPrincipalName,
+            "tid": context.tid,
+            "groupId": context.groupId
+        }
+
+        $.ajax({
+            type: "POST",
+            data: JSON.stringify(postData),
+            contentType: "application/json; charset=UTF-8",
+            url: "https://msopenhack.azurewebsites.net/api/trivia/leaderboard/user",
+            beforeSend: function (request) {
+                //request.setRequestHeader("Authorization", "Bearer " + accessToken);
+            },
+            success: function (data) {
+                buildLeaderBoard(context, data);
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                console.log("textStatus: " + textStatus + ", errorThrown:" + errorThrown);
+                $("#divError").text(errorThrown).css({ display: "" });
+                $("#divProfile").css({ display: "none" });
+            },
+        });
+    }
+
+    function buildLeaderBoard(context, boardData) {
+        console.log(boardData)
+
+        $('#leaderBoard').html('');;
+
+        $('#leaderBoard').append("<table border='2'>");
+        $('#leaderBoard').append("<thead><tr><th>Img</th><th>Name</th><th>Score</th></tr></thead>");
+
+        var tr = "<tbody>";
+        $.each(boardData, function (i, item) {
+           
+            tr += "<tr><td><img src='https://triviabott5v2.azurewebsites.net/Images/no-img.jpg' id='photo_" + item.id + "'  style='width:40px;'/></td><td>" + item.name + "</td><td><p>" + item.score + "</p></td></tr>";
+           
+        });
+        $('#leaderBoard').append(tr);
+        $('#leaderBoard').append("</tbody></table>")
+
+        $.each(boardData, function (i, item) {
+            getUserPhoto(accessToken, item.id);
+        });
+
+        
+    }
+
+    // Login to Azure AD and get access to Microsoft Graph
+    function login(context) {
+        hideProfileAndError();
+
+        microsoftTeams.authentication.authenticate({
+            url: window.location.origin + "/Leaderboard/InitiateAuthFlow",
+            width: 600,
+            height: 535,
+            successCallback: function (result) {
+                console.log("Login succeeded: " + result);
+                getUserProfile(result.accessToken);
+                $('#hdnAccessToken').val(result.accessToken);
+
+                setupLeaderBoard(context);
+            },
+            failureCallback: function (reason) {
+                console.log("Login failed: " + reason);
+                handleAuthError(reason);
+            }
+        });
+    }
+
+    // Get the user's profile information from Microsoft Graph
+    function getUserProfile(accessToken) {
+
+        $.ajaxSetup({
+            headers: {
+                'Authorization': "Bearer " + accessToken
+            }
+        });
+        $.ajax({
+            url: "https://graph.microsoft.com/v1.0/me/",
+            beforeSend: function (request) {
+                request.setRequestHeader("Authorization", "Bearer " + accessToken);
+            },
+            success: function (profile) {
+                $("#profileDisplayName").text(profile.displayName);
+                $("#profileJobTitle").text(profile.jobTitle);
+                $("#profileMail").text(profile.mail);
+                $("#profileUpn").text(profile.userPrincipalName);
+                $("#profileObjectId").text(profile.id);
+                $("#divProfile").css({ display: "" });
+                $("#divError").css({ display: "none" });
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                console.log("textStatus: " + textStatus + ", errorThrown:" + errorThrown);
+                $("#divError").text(errorThrown).css({ display: "" });
+                $("#divProfile").css({ display: "none" });
+            },
+        });
+    }
+
+    // Get the user's profile information from Microsoft Graph
+    function getUserPhoto(accessToken, upn) {
+
+        
+        var imgUrl = "https://graph.microsoft.com/beta/users/" + upn + "/photo/$value";
+        $.ajax({
+            url: imgUrl,
+            method: 'get',
+            headers: {
+                'Authorization': "Bearer " + $('#hdnAccessToken').val(),
+                'Content-Type': 'image/jpeg',
+            },
+            beforeSend: function (request) {
+                request.setRequestHeader("Authorization", "Bearer " + $('#hdnAccessToken').val());
+            },
+            success: function (image) {
+                var url = window.URL || window.webkitURL;
+
+                let binaryData = [];
+                binaryData.push(image);
+                var blobUrl = window.URL.createObjectURL(new Blob(binaryData, { type: "image/jpeg" }));
+                //var blobUrl = url.createObjectURL(image);
+                document.getElementById("photo_" + upn).setAttribute("src", blobUrl);
+                //return blobUrl;
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                console.log("textStatus: " + textStatus + ", errorThrown:" + errorThrown);
+
+                return "http://chittagongit.com/images/no-profile-picture-icon-female/no-profile-picture-icon-female-0.jpg";
+          
+            },
+        });
+    }
+
+    // Show error information
+    function handleAuthError(reason) {
+        $("#divError").text(reason).css({ display: "" });
+        $("#divProfile").css({ display: "none" });
+    }
+
+    // Clear all information in tab
+    function hideProfileAndError() {
+        $("#divError").text("").css({ display: "none" });
+        $("#divProfile").css({ display: "none" });
+    }
+
+
+
+</script>
+
+
+
+<!-- Login button -->
+<!-- <button onclick="login()">Login to Azure AD</button> -->
+<!-- Result -->
+<p>
+
+
+    <div>
+        <div><h3>Individual Leaderboard</h3></div>
+
+        <div id="leaderBoard"></div>
+
+    </div>
+
+    <div id="divError" style="display: none"></div>
+    <div id="divProfile" style="display: none">
+
+        <div><h3>My AD User Profile</h3></div>
+        <div><b>Name:</b> <span id="profileDisplayName" /></div>
+        <div><b>Job title:</b> <span id="profileJobTitle" /></div>
+        <div><b>E-mail:</b> <span id="profileMail" /></div>
+        <div><b>UPN:</b> <span id="profileUpn" /></div>
+        <div><b>Object id:</b> <span id="profileObjectId" /></div>
+        <div><b>Photo:</b> <span id="profilePhotoId" /></div>
+
+        <input type="hidden" id="hdnAccessToken" name="hdnAccessToken" />
+    </div>
+</p>

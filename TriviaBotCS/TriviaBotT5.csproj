@@ -34,11 +34,25 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Update="Pages\Leaderboard\AuthFinishedRedirect.cshtml">
+      <Pack>$(IncludeRazorContentInPack)</Pack>
+    </Content>
     <Content Update="Pages\Leaderboard\Configure.cshtml">
       <Pack>$(IncludeRazorContentInPack)</Pack>
     </Content>
     <Content Update="Pages\Leaderboard\Index.cshtml">
       <Pack>$(IncludeRazorContentInPack)</Pack>
     </Content>
+    <Content Update="Pages\Leaderboard\InitiateAuthFlow.cshtml">
+      <Pack>$(IncludeRazorContentInPack)</Pack>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\NewFolder\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\Images\no-img.jpg" />
   </ItemGroup>
 </Project>
