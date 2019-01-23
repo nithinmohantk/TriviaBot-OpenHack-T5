@@ -1,0 +1,120 @@
+﻿@page
+@using  TeamsAppSample.NETCore.Pages.Auth
+@model ConfigureModel
+@{
+    ViewData["Title"] = "Configure Leaderboard";
+}
+
+<script src="https://code.jquery.com/jquery-3.1.1.js" integrity="sha384-VC7EHu0lDzZyFfmjTPJq+DFyIn8TUGAJbEtpXquazFVr00Q/OOx//RjiZ9yU9+9m" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@@microsoft/teams-js@1.2.5/dist/MicrosoftTeams.min.js" integrity="sha384-fTjWNTelhUDsOG+6Xvsly5BVO8estmdrfVmaRQuTGRTtcjHYA3oQANo805/kHXvJ" crossorigin="anonymous"></script>
+
+<script type="text/javascript">
+    microsoftTeams.initialize();
+    microsoftTeams.settings.setValidityState(true);
+
+    microsoftTeams.settings.registerOnSaveHandler(function (saveEvent) {
+
+        var radios = document.getElementsByName("maptype");
+        if (radios[0].checked) {
+            microsoftTeams.settings.setSettings({
+                entityId: "bing",
+                contentUrl: "https://www.bing.com/maps/embed",
+                suggestedDisplayName: "Bing Map",
+                websiteUrl: "https://www.bing.com/maps",
+                removeUrl: "https://teams-get-started-sample.azurewebsites.net/tabremove.html",
+            });
+        } else {
+            microsoftTeams.settings.setSettings({
+                entityId: "google",
+                contentUrl: "https://www.google.com/maps/embed",
+                suggestedDisplayName: "Google Map",
+                websiteUrl: "https://www.google.com/maps",
+                removeUrl: "https://teams-get-started-sample.azurewebsites.net/tabremove.html",
+            });
+        }
+
+        saveEvent.notifySuccess();
+    });
+
+
+    function onClick() {
+        microsoftTeams.settings.setValidityState(true);
+    }
+
+    // Login to Azure AD and get access to Microsoft Graph
+    function login() {
+        hideProfileAndError();
+
+        microsoftTeams.authentication.authenticate({
+            url: window.location.origin + "/Auth/InitiateAuthFlow",
+            width: 600,
+            height: 535,
+            successCallback: function (result) {
+                console.log("Login succeeded: " + result);
+                getUserProfile(result.accessToken);
+            },
+            failureCallback: function (reason) {
+                console.log("Login failed: " + reason);
+                handleAuthError(reason);
+            }
+        });
+    }
+
+    // Get the user's profile information from Microsoft Graph
+    function getUserProfile(accessToken) {
+        $.ajax({
+            url: "https://graph.microsoft.com/v1.0/me/",
+            beforeSend: function (request) {
+                request.setRequestHeader("Authorization", "Bearer " + accessToken);
+            },
+            success: function (profile) {
+                $("#profileDisplayName").text(profile.displayName);
+                $("#profileJobTitle").text(profile.jobTitle);
+                $("#profileMail").text(profile.mail);
+                $("#profileUpn").text(profile.userPrincipalName);
+                $("#profileObjectId").text(profile.id);
+                $("#divProfile").css({ display: "" });
+                $("#divError").css({ display: "none" });
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                console.log("textStatus: " + textStatus + ", errorThrown:" + errorThrown);
+                $("#divError").text(errorThrown).css({ display: "" });
+                $("#divProfile").css({ display: "none" });
+            },
+        });
+    }
+
+    // Show error information
+    function handleAuthError(reason) {
+        $("#divError").text(reason).css({ display: "" });
+        $("#divProfile").css({ display: "none" });
+    }
+
+    // Clear all information in tab
+    function hideProfileAndError() {
+        $("#divError").text("").css({ display: "none" });
+        $("#divProfile").css({ display: "none" });
+    }
+</script>
+
+<p>
+    <form>
+    <input type="radio" name="maptype" value="bing" onclick="onClick()"> Bing Maps<br>
+    <input type="radio" name="maptype" value="google" onclick="onClick()"> Google Maps
+    </form>
+</p>
+
+<!-- Login button -->
+<button onclick="login()">Login to Azure AD</button>
+
+<!-- Result -->
+<p>
+    <div id="divError" style="display: none"></div>
+    <div id="divProfile" style="display: none">
+        <div><b>Name:</b> <span id="profileDisplayName" /></div>
+        <div><b>Job title:</b> <span id="profileJobTitle" /></div>
+        <div><b>E-mail:</b> <span id="profileMail" /></div>
+        <div><b>UPN:</b> <span id="profileUpn" /></div>
+        <div><b>Object id:</b> <span id="profileObjectId" /></div>
+    </div>
+</p>

@@ -5,12 +5,12 @@
   "id": "1a9ad3ed-46dc-4f0a-b3ce-93401b7a940e",
   "packageName": "com.ctrlaltelite.teams.app01",
   "developer": {
-    "name": "",
-    "websiteUrl": "https://www.github.com/ctrlaltelite/teams-app-net-core-sample",
-    "privacyUrl": "https://www.github.com/ctrlaltelite/teams-app-net-core-sample/README.md",
-    "termsOfUseUrl": "https://www.github.com/ctrlaltelite/teams-app-net-core-sample/LICENSE"
+    "name": "Ctrl-Alt-Elite Team",
+    "websiteUrl": "https://www.github.com/ctrlaltelite/teams-trivia-t5",
+    "privacyUrl": "https://www.github.com/ctrlaltelite/teams-trivia-t5/README.md",
+    "termsOfUseUrl": "https://www.github.com/ctrlaltelite/teams-trivia-t5/LICENSE"
   },
-  "icons": {
+ "icons": {
     "color": "color.png",
     "outline": "outline.png"
   },
@@ -24,6 +24,13 @@
   },
   "accentColor": "#00FF00",
   "configurableTabs": [
+    {
+      "configurationUrl": "https://triviabott5v2.azurewebsites.net/Leaderboard/configure",
+      "canUpdateConfiguration": true,
+      "scopes": [
+        "team"
+      ]
+    }
   ],
   "staticTabs": [
     {
