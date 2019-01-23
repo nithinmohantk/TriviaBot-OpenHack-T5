@@ -42,7 +42,7 @@ namespace TriviaBotT5
         /// <value>
         /// The accessor stores the turn count for the conversation.
         /// </value>
-        public IStatePropertyAccessor<CounterState> CounterState { get; set; }
+        public IStatePropertyAccessor<QuestionState> CounterState { get; set; }
 
         /// <summary>
         /// Gets the <see cref="ConversationState"/> object for the conversation.

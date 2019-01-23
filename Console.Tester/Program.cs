@@ -27,6 +27,8 @@ namespace ConsoleTester
 
            static HttpClient httpClient = new HttpClient();
 
+           const string apiEndPoint = "https://msopenhack.azurewebsites.net";
+
             static APITester()
             {
                 httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json");
@@ -34,21 +36,21 @@ namespace ConsoleTester
                 httpClient.DefaultRequestHeaders
                   .Accept
                   .Add(new MediaTypeWithQualityHeaderValue("application/json"));//ACCEPT header
-        }
+            } 
 
             public static async Task  SubmitAnswer(string Id, string questionId, string answerId)
             {
                 var sb = new StringBuilder();
                 sb.Append("{");
-                sb.Append("  \"userId\": \"\"" + Id + "\"");
-                sb.Append("  \"questionId\": \"\"" + questionId + "\"");
-                sb.Append("  \"answerId\": \"\"" + answerId + "\"");
+                sb.Append("  \"userId\": \"" + Id + "\",");
+                sb.Append("  \"questionId\": \"" + questionId + "\",");
+                sb.Append("  \"answerId\": \"" + answerId + "\"");
                 sb.Append("}");
 
-                var response = await httpClient.PostAsync("https://msopenhack.azurewebsites.net/api/trivia/answer",
-                    new StringContent(sb.ToString()));
+                var response = await httpClient.PostAsync(apiEndPoint + "/api/trivia/answer",
+                    new StringContent(sb.ToString(), Encoding.UTF8, "application/json"));
 
-                response.EnsureSuccessStatusCode();
+               //response.EnsureSuccessStatusCode();
 
                 string respJson = await response.Content.ReadAsStringAsync();
 

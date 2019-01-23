@@ -133,7 +133,7 @@ namespace TriviaBotT5
                 // State accessors enable other components to read and write individual properties of state.
                 var accessors = new TriviaBotT5Accessors(conversationState)
                {
-                   CounterState = conversationState.CreateProperty<CounterState>(TriviaBotT5Accessors.CounterStateName),
+                   CounterState = conversationState.CreateProperty<QuestionState>(TriviaBotT5Accessors.CounterStateName),
                    ConversationDialogState = conversationState.CreateProperty<DialogState>("DialogState")
                 };
 

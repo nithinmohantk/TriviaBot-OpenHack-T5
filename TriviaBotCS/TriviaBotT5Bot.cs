@@ -3,7 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,11 +13,15 @@ using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Builder.Dialogs.Choices;
 using Microsoft.Bot.Connector;
+using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Bot.Schema;
 using Microsoft.Bot.Schema.Teams;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Rest;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using TriviaBotT5.Models;
 
 namespace TriviaBotT5
 {
@@ -39,25 +45,25 @@ namespace TriviaBotT5
 
 
         static List<Choice> choices = new List<Choice>();
-       
+
         /// <summary>
         /// The <see cref="DialogSet"/> that contains all the Dialogs that can be used at runtime.
         /// </summary>
         static DialogSet _dialogs;
-
+        private IConfiguration _config;
         /// <summary>
         /// Initializes a new instance of the class.
         /// </summary>
         /// <param name="accessors">A class containing <see cref="IStatePropertyAccessor{T}"/> used to manage state.</param>
         /// <param name="loggerFactory">A <see cref="ILoggerFactory"/> that is hooked to the Azure App Service provider.</param>
         /// <seealso cref="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/logging/?view=aspnetcore-2.1#windows-eventlog-provider"/>
-        public TriviaBotT5Bot(TriviaBotT5Accessors accessors, ILoggerFactory loggerFactory)
+        public TriviaBotT5Bot(TriviaBotT5Accessors accessors, ILoggerFactory loggerFactory, IConfiguration config)
         {
             if (loggerFactory == null)
             {
                 throw new System.ArgumentNullException(nameof(loggerFactory));
             }
-
+            _config = config;
             _logger = loggerFactory.CreateLogger<TriviaBotT5Bot>();
             _logger.LogTrace("Turn start.");
             _accessors = accessors ?? throw new System.ArgumentNullException(nameof(accessors));
@@ -145,10 +151,34 @@ namespace TriviaBotT5
                 // If the DialogTurnStatus is Empty we should start a new dialog.
                 if (results.Status == DialogTurnStatus.Empty)
                 {
+                    var Id = turnContext.Activity.From.AadObjectId;
+
+                    var question = await OpenHackAPIClient.GetQuestion(Id);
+                    //question.
+                    var questionOptions = new List<Choice>();
+
+                    foreach (var qo in question.questionOptions)
+                    {
+                        questionOptions.Add(new Choice
+                        {
+                            Value = qo.text,
+                            Synonyms = new List<string> { qo.id.ToString() }
+                        });
+                    }
+                    
+                    var state = await _accessors.CounterState.GetAsync(turnContext, () => new QuestionState());
+                    // Bump the turn count for this conversation.
+                    state.CurrentQuestion = question;
+                    // Set the property using the accessor.
+                    await _accessors.CounterState.SetAsync(turnContext, state);
+                    // Save the new turn count into the conversation state.
+                    await _accessors.ConversationState.SaveChangesAsync(turnContext);
+
+                    _logger.LogDebug("Questions>>" + JsonConvert.SerializeObject(question, Formatting.Indented));
                     // A prompt dialog can be started directly on the DialogContext. The prompt text is given in the PromptOptions.
                     await dialogContext.PromptAsync(
                         "choices",
-                        new PromptOptions { Prompt = MessageFactory.Text("Please answer the trivia question."), Choices = choices },
+                        new PromptOptions { Prompt = MessageFactory.Text(question.text), Choices = questionOptions   },
                         cancellationToken);
                 }
 
@@ -158,54 +188,46 @@ namespace TriviaBotT5
                     // Check for a result.
                     if (results.Result != null)
                     {
+                        var Id = turnContext.Activity.From.AadObjectId;
+                        var state = await _accessors.CounterState.GetAsync(turnContext, () => new QuestionState());
+                        var question = state.CurrentQuestion;
+
+                        var choice = results.Result as FoundChoice;
+
+                        var choice2 = question.questionOptions.Where(o => o.text == choice.Value).FirstOrDefault();
+
+                        var answerResponse = await OpenHackAPIClient.SubmitAnswer(Id, question.id.ToString(), choice2.id.ToString());
+
+                        _logger.LogDebug("Answer Response>>" + JsonConvert.SerializeObject(answerResponse, Formatting.Indented));
+                        string answerStatus = answerResponse.correct ? "correct" : "incorrect"; 
                         // Finish by sending a message to the user. Next time ContinueAsync is called it will return DialogTurnStatus.Empty.
-                        await turnContext.SendActivityAsync(MessageFactory.Text($"Thank you, I have your answer as '{results.Result}'."));
+                        await turnContext.SendActivityAsync(MessageFactory.Text($"Thank you, your answer ({choice.Value})  was '{ answerStatus }'."));
+
                     }
                 }
             }
             else if (turnContext.Activity.Type == ActivityTypes.ConversationUpdate)
             {
+                var responseMessage = $"Conversation Update '{turnContext.Activity.Text}'\n";
+                _logger.LogDebug(responseMessage);
                 if (turnContext.Activity.MembersAdded != null)
                 {
                     // Send a welcome message to the user and tell them what actions they may perform to use this bot
                     await SendWelcomeMessageAsync(turnContext, cancellationToken);
+
+
+                    await RegisterTeamRoster(turnContext, cancellationToken);
+
                 }
             }
-            else if( turnContext.Activity.Type == ActivityTypes.InstallationUpdate)
+            else if (turnContext.Activity.Type == ActivityTypes.InstallationUpdate)
             {
                 var responseMessage = $"Installation Update '{turnContext.Activity.Text}'\n";
-                await turnContext.SendActivityAsync(responseMessage);
 
-                var context = turnContext;
-                // Fetch the members in the current conversation
-                var connector = new ConnectorClient(new Uri(context.Activity.ServiceUrl));
-                var members = await connector.Conversations.GetConversationMembersAsync(context.Activity.Conversation.Id);     
+                _logger.LogDebug(responseMessage);
+                //await turnContext.SendActivityAsync(responseMessage);
 
-                TeamsChannelData channelData = turnContext.Activity.GetChannelData<TeamsChannelData>();
-
-                if (channelData != null)
-                {
-                    var teamId = channelData.Team.Id;
-                    var sb = new StringBuilder();
-                    sb.Append("{");
-                    sb.Append("  \"teamId\": \"\"" + teamId + "\"");
-                    sb.Append("  \"members\": [");
-                    // Concatenate information about all members into a string
-                    foreach (var member in members)
-                    {
-                        sb.Append($"{{\"id\": \"{member.Id}\", \"name\" = \"{member.Name}\"}}");
-                        sb.AppendLine();
-                    }
-                    sb.Append("]}");
-
-                    var client = new HttpClient();
-                    await client.PostAsync("https://msopenhack.azurewebsites.net/api/trivia/register",
-                        new StringContent(sb.ToString()));
-
-                    await turnContext.SendActivityAsync($"Team Roster Updated");
-                }
-
-
+                await RegisterTeamRoster(turnContext, cancellationToken);
             }
             else
             {
@@ -214,6 +236,51 @@ namespace TriviaBotT5
 
             // Save the new turn count into the conversation state.
             await _accessors.ConversationState.SaveChangesAsync(turnContext, false, cancellationToken);
+        }
+
+        private MicrosoftAppCredentials GetMSAppCredential()
+        {
+            return new MicrosoftAppCredentials(_config["MicrosoftAppId"], _config["MicrosoftAppPassword"]);
+        }
+
+        public async Task RegisterTeamRoster(ITurnContext turnContext, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var context = turnContext;
+            // Fetch the members in the current conversation
+
+            var connector = new ConnectorClient(new Uri(context.Activity.ServiceUrl), GetMSAppCredential());
+            var members = await connector.Conversations.GetConversationMembersAsync(context.Activity.Conversation.Id);
+
+            TeamsChannelData channelData = turnContext.Activity.GetChannelData<TeamsChannelData>();
+
+            if (channelData != null)
+            {
+                var teamId = channelData.Team.Id;
+                var sb = new StringBuilder();
+                sb.Append("{");
+                sb.Append("  \"teamId\": \"" + teamId + "\",");
+                sb.Append("  \"members\": [");
+                // Concatenate information about all members into a string
+
+
+                foreach (var member in members)
+                {
+                    sb.Append($"{{\"id\": \"{member.Id}\", \"name\": \"{member.Name}\"}}");
+                    sb.Append(",");
+                }
+
+                sb.Remove(sb.Length - 1, 1);
+                sb.Append("]}");
+
+
+                _logger.LogDebug("Calling Register Roster API >>>");
+                _logger.LogDebug(sb.ToString());
+                var result = await OpenHackAPIClient.SubmitRoster(sb);
+
+                _logger.LogDebug("API Result >>>" );
+                _logger.LogDebug(result.ToString(Formatting.None));
+
+            }
         }
 
 
@@ -235,11 +302,11 @@ namespace TriviaBotT5
                         $"Welcome to Trivia Bot(T5) Assistant, {member.Name}.                                                    {WelcomeText}",
                         cancellationToken: cancellationToken);
 
-                    var dialogContext = await _dialogs.CreateContextAsync(turnContext, cancellationToken);
+                    /*var dialogContext = await _dialogs.CreateContextAsync(turnContext, cancellationToken);
                     await dialogContext.PromptAsync(
                        "choices",
                        new PromptOptions { Prompt = MessageFactory.Text("Please answer the trivia question."), Choices = choices },
-                       cancellationToken);
+                       cancellationToken);*/
                     //await SendSuggestedActionsAsync(turnContext, cancellationToken);
                 }
             }
@@ -257,7 +324,7 @@ namespace TriviaBotT5
         /// <returns>A <see cref="Task"/> that represents the work queued to execute.</returns>
         private static async Task SendSuggestedActionsAsync(ITurnContext turnContext, CancellationToken cancellationToken)
         {
-            
+
             var reply = turnContext.Activity.CreateReply("What is your favorite color?");
             reply.SuggestedActions = new SuggestedActions()
             {
@@ -362,5 +429,80 @@ namespace TriviaBotT5
                     }
             }
         }
+
+
+
+        public static class OpenHackAPIClient
+        {
+
+            static HttpClient httpClient = new HttpClient();
+
+            const string apiEndPoint = "https://msopenhack.azurewebsites.net";
+
+            static OpenHackAPIClient()
+            {
+                httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json");
+                httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json; charset=utf-8");
+                httpClient.DefaultRequestHeaders
+                  .Accept
+                  .Add(new MediaTypeWithQualityHeaderValue("application/json"));//ACCEPT header
+            }
+
+
+            /// <summary></summary>
+            /// <param name="Id"></param>
+            public static async Task<QuestionModel> GetQuestion(string Id)
+            {
+                var sb = new StringBuilder();
+                sb.Append("{");
+                sb.Append("  \"id\": \"" + Id + "\"");
+             
+                sb.Append("}");
+                var response = await httpClient.PostAsync(apiEndPoint + "/api/trivia/question",
+                    new StringContent(sb.ToString(), Encoding.UTF8, "application/json"));
+                //response.EnsureSuccessStatusCode();
+                string respJson = await response.Content.ReadAsStringAsync();
+                var jObj = JsonConvert.DeserializeObject<QuestionModel>(respJson);
+                return jObj;
+            }
+        
+
+
+            public static async Task<AnswerResponseModel> SubmitAnswer(string Id, string questionId, string answerId)
+            {
+                var sb = new StringBuilder();
+                sb.Append("{");
+                sb.Append("  \"userId\": \"" + Id + "\",");
+                sb.Append("  \"questionId\": \"" + questionId + "\",");
+                sb.Append("  \"answerId\": \"" + answerId + "\"");
+                sb.Append("}");
+
+                var response = await httpClient.PostAsync(apiEndPoint + "/api/trivia/answer",
+                    new StringContent(sb.ToString(), Encoding.UTF8, "application/json"));
+
+                //response.EnsureSuccessStatusCode();
+
+                string respJson = await response.Content.ReadAsStringAsync();
+
+                AnswerResponseModel jObj = JsonConvert.DeserializeObject<AnswerResponseModel>(respJson);
+
+                return jObj;
+            }
+
+            public static async Task<JObject> SubmitRoster(StringBuilder sb)
+            {
+                var response = await httpClient.PostAsync(apiEndPoint + "/api/trivia/register",
+                  new StringContent(sb.ToString(), Encoding.UTF8, "application/json"));
+                //response.EnsureSuccessStatusCode();
+                string respJson = await response.Content.ReadAsStringAsync();
+                JObject jObj = JsonConvert.DeserializeObject<JObject>(respJson);
+                return jObj;
+            }
+
+
+            
+
+        }
     }
+
 }
