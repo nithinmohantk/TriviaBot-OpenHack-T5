@@ -6,74 +6,17 @@
 <script src="https://code.jquery.com/jquery-3.1.1.js" integrity="sha384-VC7EHu0lDzZyFfmjTPJq+DFyIn8TUGAJbEtpXquazFVr00Q/OOx//RjiZ9yU9+9m" crossorigin="anonymous"></script>
 <!-- Microsoft Teams JavaScript API (via CDN) -->
 <script src="https://unpkg.com/@@microsoft/teams-js@1.3.4/dist/MicrosoftTeams.min.js" integrity="sha384-3zTjxw3msc6gKx3DseSU0lfRM129YrFjr2xgocfMIN/kBCdzJ88d+FSB1n3scUku" crossorigin="anonymous"></script>
-<style>
 
+<style>
     table {
-        border: 1px solid #1C6EA4;
-        background-color: #EEEEEE;
-        width: 100%;
-        text-align: left;
         border-collapse: collapse;
     }
 
-        table td, table th {
-            border: 1px solid #AAAAAA;
-            padding: 3px 2px;
-        }
-
-        table tbody td {
-            font-size: 13px;
-        }
-
-        table tr:nth-child(even) {
-            background: #D0E4F5;
-        }
-
-        table thead {
-            background: #1C6EA4;
-            background: -moz-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
-            background: -webkit-linear-gradient(top, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
-            background: linear-gradient(to bottom, #5592bb 0%, #327cad 66%, #1C6EA4 100%);
-            border-bottom: 2px solid #444444;
-        }
-
-            table thead th {
-                font-size: 15px;
-                font-weight: bold;
-                color: #FFFFFF;
-                border-left: 2px solid #D0E4F5;
-            }
-
-                table thead th:first-child {
-                    border-left: none;
-                }
-
-        table tfoot {
-            font-size: 14px;
-            font-weight: bold;
-            color: #FFFFFF;
-            background: #D0E4F5;
-            background: -moz-linear-gradient(top, #dcebf7 0%, #d4e6f6 66%, #D0E4F5 100%);
-            background: -webkit-linear-gradient(top, #dcebf7 0%, #d4e6f6 66%, #D0E4F5 100%);
-            background: linear-gradient(to bottom, #dcebf7 0%, #d4e6f6 66%, #D0E4F5 100%);
-            border-top: 2px solid #444444;
-        }
-
-            table tfoot td {
-                font-size: 14px;
-            }
-
-            table tfoot .links {
-                text-align: right;
-            }
-
-                table tfoot .links a {
-                    display: inline-block;
-                    background: #1C6EA4;
-                    color: #FFFFFF;
-                    padding: 2px 8px;
-                    border-radius: 5px;
-                }
+    table, th, td {
+        border: 1px solid #0094ff;
+        text-align: center;
+        padding: 5px;
+    }
 </style>
 <h2>Welcome to <span id="teamName"></span> Dashboard</h2>
 
@@ -238,9 +181,15 @@
 
                 let binaryData = [];
                 binaryData.push(image);
-                var blobUrl = window.URL.createObjectURL(new Blob(binaryData, { type: "image/jpeg" }));
+                let blob = new Blob(binaryData, { type: "image/jpeg" });
+                var blobUrl = url.createObjectURL(blob);
                 //var blobUrl = url.createObjectURL(image);
-                document.getElementById("photo_" + upn).setAttribute("src", blobUrl);
+
+                var photoElem = document.getElementById("photo_" + upn);
+                //document.getElementById("photo_" + upn).setAttribute("src", blobUrl);
+
+                photoElem.src = blobUrl;
+                //photoElem.src = 'data:image/jpeg;base64,' + hexToBase64(image);
                 //return blobUrl;
             },
             error: function (xhr, textStatus, errorThrown) {
@@ -250,6 +199,10 @@
           
             },
         });
+    }
+
+    function hexToBase64(str) {
+        return btoa(String.fromCharCode.apply(null, str.replace(/\r|\n/g, "").replace(/([\da-fA-F]{2}) ?/g, "0x$1 ").replace(/ +$/, "").split(" ")));
     }
 
     // Show error information
