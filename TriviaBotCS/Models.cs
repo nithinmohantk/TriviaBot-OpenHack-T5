@@ -40,6 +40,8 @@ namespace TriviaBotT5.Models
         public string EventType { get; set; }
         public T Data { get; set; }
         public DateTime EventTime { get; set; }
+
+        public string DataVersion { get; set; }
     }
 
 }

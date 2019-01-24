@@ -197,19 +197,19 @@ namespace TriviaBotT5
                         var choice2 = question.questionOptions.Where(o => o.text == choice.Value).FirstOrDefault();
 
                         var answerResponse = await OpenHackAPIClient.SubmitAnswer(Id, question.id.ToString(), choice2.id.ToString());
-
-
-
+                                               
                         _logger.LogDebug("Answer Response>>" + JsonConvert.SerializeObject(answerResponse, Formatting.Indented));
 
                         if (answerResponse.correct)
                         {
                             var context = turnContext;
+                            TeamsChannelData channelData = turnContext.Activity.GetChannelData<TeamsChannelData>();
                             var connector = new ConnectorClient(new Uri(context.Activity.ServiceUrl), GetMSAppCredential());
                             var members = await connector.Conversations.GetConversationMembersAsync(context.Activity.Conversation.Id);
 
                             await OpenHackAPIClient.SendToEventGrid(answerResponse, turnContext.Activity.From, 
-                                turnContext.Activity.Recipient, members, turnContext.Activity.ServiceUrl, _logger);
+                                turnContext.Activity.Recipient, members, turnContext.Activity.ServiceUrl,
+                                channelData.Tenant.Id, _logger);
                         }
                         
                         string answerStatus = answerResponse.correct ? "correct" : "incorrect";
@@ -361,7 +361,7 @@ namespace TriviaBotT5
         const string apiEndPoint = "https://msopenhack.azurewebsites.net";
 
         const string topicEndpoint = "https://trivia-bot-grid1.westus2-1.eventgrid.azure.net/api/events?api-version=2018-01-01";
-        const string sasKey = "NQo7zDGBzpiEOsf+37nSWkz+9pMQxOgXlk0xVMn9qVI=";
+        const string sasKey = "/4jnc5mLX+MJi6IQyQNrfn2h+UqElpZBacbOTkFcfek=";
 
         static OpenHackAPIClient()
         {
@@ -433,13 +433,14 @@ namespace TriviaBotT5
 }] */
 
         public static async Task SendToEventGrid(AnswerResponseModel message, ChannelAccount currentUser,
-            ChannelAccount botUser, IList<ChannelAccount> members, string serviceUrl, ILogger logger)
+            ChannelAccount botUser, IList<ChannelAccount> members, string serviceUrl, string tenantId, ILogger logger)
         {
             GridEvent<NewBadgeReceivedEventData> gridEvent = new GridEvent<NewBadgeReceivedEventData>();
             gridEvent.EventTime = DateTime.UtcNow;
             gridEvent.Id = Guid.NewGuid().ToString();
             gridEvent.EventType = "Badge.ItemReceived";
             gridEvent.Subject = "New Badge Achieved";
+            gridEvent.DataVersion = "1.0";
             gridEvent.Data = new NewBadgeReceivedEventData()
             {
                 botId = botUser.Id,
@@ -449,6 +450,8 @@ namespace TriviaBotT5
                 badgeIcon = message.achievementBadgeIcon,
                 badgeName = message.achievementBadge,
                 channelId = currentUser.Id,
+                teamId = botUser.Id,
+                tenantId = tenantId,
                 teamMembers = members.Select(m => new TeamMember(m)).ToArray(),
                 serviceUrl = serviceUrl
             };
@@ -457,14 +460,17 @@ namespace TriviaBotT5
 
             try
             {
-                var response = await httpClient.PostAsync(topicEndpoint,
-                    new StringContent(JsonConvert.SerializeObject(gridEvent), Encoding.UTF8, "application/json"));
+                string body = JsonConvert.SerializeObject(new GridEvent<NewBadgeReceivedEventData>[] { gridEvent },Formatting.Indented);
 
+                logger.LogDebug("Request Body >> " + body);
+                var response = await httpClient.PostAsync(topicEndpoint,
+                    new StringContent(body, Encoding.UTF8, "application/json"));
+                logger.LogDebug("Response >> " + JsonConvert.SerializeObject(response, Formatting.Indented));
                 response.EnsureSuccessStatusCode();
             }
             catch (Exception ex)
             {
-                logger.LogError("Error in Sending SendToEventGrid request", ex);
+                logger.LogError("Error in Sending SendToEventGrid request" + ex.ToString());
             }
 
             logger.LogDebug("Sending >>SendToEventGrid request -- completed");

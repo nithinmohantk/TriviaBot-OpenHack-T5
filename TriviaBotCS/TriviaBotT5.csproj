@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
     <UserSecretsId>b18b4395-4fbb-4c15-9444-fb4d1f57287a</UserSecretsId>
     <ApplicationInsightsResourceId>/subscriptions/44075180-60d2-4371-86ed-a168c1279e7f/resourcegroups/MusicBot/providers/microsoft.insights/components/music-bot-ai</ApplicationInsightsResourceId>
     <ApplicationInsightsAnnotationResourceId>/subscriptions/44075180-60d2-4371-86ed-a168c1279e7f/resourcegroups/MusicBot/providers/microsoft.insights/components/music-bot-ai</ApplicationInsightsAnnotationResourceId>

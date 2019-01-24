@@ -8,6 +8,7 @@ using Microsoft.Azure.EventGrid.Models;
 using Microsoft.Bot.Connector;
 using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Bot.Schema;
+using Microsoft.Bot.Schema.Teams;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -113,29 +114,63 @@ namespace TriviaBotT5
         {
             try
             {
-                var connector = new ConnectorClient(new Uri(eventData.serviceUrl),
-                        new MicrosoftAppCredentials(_config["MicrosoftAppId"], _config["MicrosoftAppPassword"]));
-                var botAccount = new ChannelAccount(eventData.teamId, null, "bot");
+                string serviceURL = eventData.serviceUrl;
+                if (!MicrosoftAppCredentials.IsTrustedServiceUrl(serviceURL))
+                {
+                    _logger.LogInformation($"Adding to trusted service urls: {serviceURL}");
 
+                    // Register the service URL as trusted
+                    MicrosoftAppCredentials.TrustServiceUrl(serviceURL);
+                }
+                MicrosoftAppCredentials.TrustServiceUrl(serviceURL);
+                var account = new MicrosoftAppCredentials(_config["MicrosoftAppId"], _config["MicrosoftAppPassword"]);
+                var jwtToken = await account.GetTokenAsync();
+
+                var connector = new ConnectorClient(new Uri(eventData.serviceUrl),
+                        account);
+                var botAccount = new ChannelAccount(eventData.botId, eventData.botName, "bot");
+
+                
                 foreach (var member in eventData.teamMembers)
                 {
-                    var message = Activity.CreateMessageActivity() as Activity;
-                    message.From = botAccount;
-                    message.Text = $"Great news! {eventData.userName} has achieved the {eventData.badgeName} badge.";
-                    message.Recipient = new ChannelAccount(member.userTeamsId, member.userName, "user", member.userAadId);
+                    var userAccount = new ChannelAccount(member.userTeamsId, member.userName, "user", member.userAadId);
+                   
                     _logger.LogDebug($"About to send a message to {member.userName}");
                     try
                     {
-                        await connector.Conversations.CreateDirectConversationAsync(botAccount, message.Recipient, message);
+                        // Create a new message activity
+                        IMessageActivity message = Activity.CreateMessageActivity();
+                        var parameters = new ConversationParameters
+                        {
+                            Bot = botAccount,
+                            Members = new ChannelAccount[] { userAccount },
+                            ChannelData = new TeamsChannelData
+                            {
+                                Tenant = new TenantInfo(eventData.tenantId)
+                            }
+                        };
+
+                        var conversationResource = await connector.Conversations.CreateConversationAsync(parameters);
+                        var conversationId = conversationResource.Id;
+
+                        // Set relevant message details
+                        message.From = botAccount;
+                        message.Recipient = userAccount;
+                        message.Text = $"Great news! {eventData.userName} has achieved the {eventData.badgeName} badge.";
+                        message.Locale = "en-Us";
+
+                        // Create a new converstaion and add it to the message.
+                        message.Conversation = new ConversationAccount(id: conversationId);
+                        await connector.Conversations.SendToConversationAsync((Activity)message);
                     }
                     catch (Exception e)
                     {
-                        _logger.LogError("Error while attempting to send proactive conversation", e);
+                        _logger.LogError("Error while attempting to send proactive conversation"+ e.ToString());
                     }
                 }
             } catch(Exception ex)
             {
-                _logger.LogError("General failure while processing proactive messages", ex);
+                _logger.LogError("General failure while processing proactive messages" + ex.ToString());
             }            
         }
 
@@ -147,6 +182,8 @@ namespace TriviaBotT5
 
     public class NewBadgeReceivedEventData
     {
+        public string tenantId { get; set; }
+
         public string serviceUrl { get; set; }
         public string botId { get; set; }
         public string botName { get; set; }
@@ -192,9 +229,13 @@ namespace TriviaBotT5
     {
         public TeamMember(ChannelAccount account)
         {
-            userAadId = account.AadObjectId;
-            userTeamsId = account.Id;
-            userName = account.Name;
+
+            if (account != null)
+            {
+                userAadId = account.AadObjectId;
+                userTeamsId = account.Id;
+                userName = account.Name;
+            }
         }
 
         public string userAadId
