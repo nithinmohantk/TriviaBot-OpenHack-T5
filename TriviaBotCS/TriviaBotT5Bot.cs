@@ -165,7 +165,7 @@ namespace TriviaBotT5
                             Synonyms = new List<string> { qo.id.ToString() }
                         });
                     }
-                    
+
                     var state = await _accessors.CounterState.GetAsync(turnContext, () => new QuestionState());
                     // Bump the turn count for this conversation.
                     state.CurrentQuestion = question;
@@ -178,7 +178,7 @@ namespace TriviaBotT5
                     // A prompt dialog can be started directly on the DialogContext. The prompt text is given in the PromptOptions.
                     await dialogContext.PromptAsync(
                         "choices",
-                        new PromptOptions { Prompt = MessageFactory.Text(question.text), Choices = questionOptions   },
+                        new PromptOptions { Prompt = MessageFactory.Text(question.text), Choices = questionOptions },
                         cancellationToken);
                 }
 
@@ -198,8 +198,21 @@ namespace TriviaBotT5
 
                         var answerResponse = await OpenHackAPIClient.SubmitAnswer(Id, question.id.ToString(), choice2.id.ToString());
 
+
+
                         _logger.LogDebug("Answer Response>>" + JsonConvert.SerializeObject(answerResponse, Formatting.Indented));
-                        string answerStatus = answerResponse.correct ? "correct" : "incorrect"; 
+
+                        if (answerResponse.correct)
+                        {
+                            var context = turnContext;
+                            var connector = new ConnectorClient(new Uri(context.Activity.ServiceUrl), GetMSAppCredential());
+                            var members = await connector.Conversations.GetConversationMembersAsync(context.Activity.Conversation.Id);
+
+                            await OpenHackAPIClient.SendToEventGrid(answerResponse, turnContext.Activity.From, 
+                                turnContext.Activity.Recipient, members, turnContext.Activity.ServiceUrl, _logger);
+                        }
+                        
+                        string answerStatus = answerResponse.correct ? "correct" : "incorrect";
                         // Finish by sending a message to the user. Next time ContinueAsync is called it will return DialogTurnStatus.Empty.
                         await turnContext.SendActivityAsync(MessageFactory.Text($"Thank you, your answer ({choice.Value})  was '{ answerStatus }'."));
 
@@ -277,7 +290,7 @@ namespace TriviaBotT5
                 _logger.LogDebug(sb.ToString());
                 var result = await OpenHackAPIClient.SubmitRoster(sb);
 
-                _logger.LogDebug("API Result >>>" );
+                _logger.LogDebug("API Result >>>");
                 _logger.LogDebug(result.ToString(Formatting.None));
 
             }
@@ -338,171 +351,136 @@ namespace TriviaBotT5
             await turnContext.SendActivityAsync(reply, cancellationToken);
         }
 
-        /// <summary></summary>
-        /// <param name="context"></param>
-        /// <param name="cancellationToken"></param>
-        private static async Task GetNextQuestionAsync(ITurnContext context, CancellationToken cancellationToken)
-        {
-            // Fetch the members in the current conversation
-            var connector = new ConnectorClient(new Uri(context.Activity.ServiceUrl));
-            var members = await connector.Conversations.GetConversationMembersAsync(context.Activity.Conversation.Id);
-
-            var Id = context.Activity.Recipient.Id;
-
-            var sb = new StringBuilder();
-            sb.Append("{");
-            sb.Append("  \"Id\": \"\"" + Id + "\"");
-            sb.Append("}");
-
-            var client = new HttpClient();
-            var httpResponseMessage = await client.PostAsync("https://msopenhack.azurewebsites.net/api/trivia/question",
-                new StringContent(sb.ToString()));
-
-
-            string respJson = await httpResponseMessage.Content.ReadAsStringAsync();
-
-            JObject jObj = JsonConvert.DeserializeObject<JObject>(respJson);
-
-        }
-
-
-        /// <summary>Submits the question answer asynchronous.</summary>
-        /// <param name="context">The context.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns></returns>
-        private static async Task SubmitQuestionAnswerAsync(ITurnContext context, CancellationToken cancellationToken)
-        {
-            // Fetch the members in the current conversation
-            var connector = new ConnectorClient(new Uri(context.Activity.ServiceUrl));
-            var members = await connector.Conversations.GetConversationMembersAsync(context.Activity.Conversation.Id);
-
-            var Id = context.Activity.Recipient.Id;
-            var questionId = "";
-            var answerId = "";
-            var sb = new StringBuilder();
-            sb.Append("{");
-            sb.Append("  \"userId\": \"\"" + Id + "\"");
-            sb.Append("  \"questionId\": \"\"" + questionId + "\"");
-            sb.Append("  \"answerId\": \"\"" + answerId + "\"");
-            sb.Append("}");
-
-            var client = new HttpClient();
-            var httpResponseMessage = await client.PostAsync("https://msopenhack.azurewebsites.net/api/trivia/answer",
-                new StringContent(sb.ToString()));
-
-
-            string respJson = await httpResponseMessage.Content.ReadAsStringAsync();
-
-            JObject jObj = JsonConvert.DeserializeObject<JObject>(respJson);
-
-        }
-
-
-        /// <summary>
-        /// Given the text from the message activity the user sent, create the text for the response.
-        /// </summary>
-        /// <param name="text">The text that was input by the user.</param>
-        /// <returns>A <see cref="Task"/> that represents the work queued to execute.</returns>
-        private static string ProcessInput(string text)
-        {
-            const string colorText = "is the best color, I agree.";
-            switch (text)
-            {
-                case "red":
-                    {
-                        return $"Red {colorText}";
-                    }
-
-                case "yellow":
-                    {
-                        return $"Yellow {colorText}";
-                    }
-
-                case "blue":
-                    {
-                        return $"Blue {colorText}";
-                    }
-
-                default:
-                    {
-                        return "Please select a color from the suggested action choices";
-                    }
-            }
-        }
-
-
-
-        public static class OpenHackAPIClient
-        {
-
-            static HttpClient httpClient = new HttpClient();
-
-            const string apiEndPoint = "https://msopenhack.azurewebsites.net";
-
-            static OpenHackAPIClient()
-            {
-                httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json");
-                httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json; charset=utf-8");
-                httpClient.DefaultRequestHeaders
-                  .Accept
-                  .Add(new MediaTypeWithQualityHeaderValue("application/json"));//ACCEPT header
-            }
-
-
-            /// <summary></summary>
-            /// <param name="Id"></param>
-            public static async Task<QuestionModel> GetQuestion(string Id)
-            {
-                var sb = new StringBuilder();
-                sb.Append("{");
-                sb.Append("  \"id\": \"" + Id + "\"");
-             
-                sb.Append("}");
-                var response = await httpClient.PostAsync(apiEndPoint + "/api/trivia/question",
-                    new StringContent(sb.ToString(), Encoding.UTF8, "application/json"));
-                //response.EnsureSuccessStatusCode();
-                string respJson = await response.Content.ReadAsStringAsync();
-                var jObj = JsonConvert.DeserializeObject<QuestionModel>(respJson);
-                return jObj;
-            }
-        
-
-
-            public static async Task<AnswerResponseModel> SubmitAnswer(string Id, string questionId, string answerId)
-            {
-                var sb = new StringBuilder();
-                sb.Append("{");
-                sb.Append("  \"userId\": \"" + Id + "\",");
-                sb.Append("  \"questionId\": \"" + questionId + "\",");
-                sb.Append("  \"answerId\": \"" + answerId + "\"");
-                sb.Append("}");
-
-                var response = await httpClient.PostAsync(apiEndPoint + "/api/trivia/answer",
-                    new StringContent(sb.ToString(), Encoding.UTF8, "application/json"));
-
-                //response.EnsureSuccessStatusCode();
-
-                string respJson = await response.Content.ReadAsStringAsync();
-
-                AnswerResponseModel jObj = JsonConvert.DeserializeObject<AnswerResponseModel>(respJson);
-
-                return jObj;
-            }
-
-            public static async Task<JObject> SubmitRoster(StringBuilder sb)
-            {
-                var response = await httpClient.PostAsync(apiEndPoint + "/api/trivia/register",
-                  new StringContent(sb.ToString(), Encoding.UTF8, "application/json"));
-                //response.EnsureSuccessStatusCode();
-                string respJson = await response.Content.ReadAsStringAsync();
-                JObject jObj = JsonConvert.DeserializeObject<JObject>(respJson);
-                return jObj;
-            }
-
-
-            
-
-        }
     }
 
+    public static class OpenHackAPIClient
+    {
+
+        static HttpClient httpClient = new HttpClient();
+
+        const string apiEndPoint = "https://msopenhack.azurewebsites.net";
+
+        const string topicEndpoint = "https://trivia-bot-grid1.westus2-1.eventgrid.azure.net/api/events?api-version=2018-01-01";
+        const string sasKey = "NQo7zDGBzpiEOsf+37nSWkz+9pMQxOgXlk0xVMn9qVI=";
+
+        static OpenHackAPIClient()
+        {
+            httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Accept", "application/json");
+            httpClient.DefaultRequestHeaders.TryAddWithoutValidation("Content-Type", "application/json; charset=utf-8");
+            httpClient.DefaultRequestHeaders.TryAddWithoutValidation("aeg-sas-key", sasKey);
+            httpClient.DefaultRequestHeaders
+              .Accept
+              .Add(new MediaTypeWithQualityHeaderValue("application/json"));//ACCEPT header
+        }
+
+
+        /// <summary></summary>
+        /// <param name="Id"></param>
+        public static async Task<QuestionModel> GetQuestion(string Id)
+        {
+            var sb = new StringBuilder();
+            sb.Append("{");
+            sb.Append("  \"id\": \"" + Id + "\"");
+
+            sb.Append("}");
+            var response = await httpClient.PostAsync(apiEndPoint + "/api/trivia/question",
+                new StringContent(sb.ToString(), Encoding.UTF8, "application/json"));
+            //response.EnsureSuccessStatusCode();
+            string respJson = await response.Content.ReadAsStringAsync();
+            var jObj = JsonConvert.DeserializeObject<QuestionModel>(respJson);
+            return jObj;
+        }
+
+
+
+        public static async Task<AnswerResponseModel> SubmitAnswer(string Id, string questionId, string answerId)
+        {
+            var sb = new StringBuilder();
+            sb.Append("{");
+            sb.Append("  \"userId\": \"" + Id + "\",");
+            sb.Append("  \"questionId\": \"" + questionId + "\",");
+            sb.Append("  \"answerId\": \"" + answerId + "\"");
+            sb.Append("}");
+
+            var response = await httpClient.PostAsync(apiEndPoint + "/api/trivia/answer",
+                new StringContent(sb.ToString(), Encoding.UTF8, "application/json"));
+
+            //response.EnsureSuccessStatusCode();
+
+            string respJson = await response.Content.ReadAsStringAsync();
+
+            AnswerResponseModel jObj = JsonConvert.DeserializeObject<AnswerResponseModel>(respJson);
+
+            return jObj;
+        }
+
+
+        /*
+         * [{  
+"id":"RANDOM",
+"eventTypeVersion": "",
+"eventType":"Badge.ItemReceived",
+"subject":"Joon is here",
+"eventTime":"2019-01-24T18:41:00.9584103Z",
+"data":{  
+  "userName":"Ducati",
+  "badgeName":"Monster",
+  "badgeIcon":"Monster Icon",
+  "email":"MonsterEmail",
+  "userId":"MonsterUserID"
+},
+"dataVersion":"1.0"
+}] */
+
+        public static async Task SendToEventGrid(AnswerResponseModel message, ChannelAccount currentUser,
+            ChannelAccount botUser, IList<ChannelAccount> members, string serviceUrl, ILogger logger)
+        {
+            GridEvent<NewBadgeReceivedEventData> gridEvent = new GridEvent<NewBadgeReceivedEventData>();
+            gridEvent.EventTime = DateTime.UtcNow;
+            gridEvent.Id = Guid.NewGuid().ToString();
+            gridEvent.EventType = "Badge.ItemReceived";
+            gridEvent.Subject = "New Badge Achieved";
+            gridEvent.Data = new NewBadgeReceivedEventData()
+            {
+                botId = botUser.Id,
+                botName = botUser.Name,
+                userId = currentUser.AadObjectId,
+                userName = currentUser.Name,
+                badgeIcon = message.achievementBadgeIcon,
+                badgeName = message.achievementBadge,
+                channelId = currentUser.Id,
+                teamMembers = members.Select(m => new TeamMember(m)).ToArray(),
+                serviceUrl = serviceUrl
+            };
+
+            logger.LogDebug("Sending >>SendToEventGrid request");
+
+            try
+            {
+                var response = await httpClient.PostAsync(topicEndpoint,
+                    new StringContent(JsonConvert.SerializeObject(gridEvent), Encoding.UTF8, "application/json"));
+
+                response.EnsureSuccessStatusCode();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError("Error in Sending SendToEventGrid request", ex);
+            }
+
+            logger.LogDebug("Sending >>SendToEventGrid request -- completed");
+
+        }
+
+
+        public static async Task<JObject> SubmitRoster(StringBuilder sb)
+        {
+            var response = await httpClient.PostAsync(apiEndPoint + "/api/trivia/register",
+              new StringContent(sb.ToString(), Encoding.UTF8, "application/json"));
+            //response.EnsureSuccessStatusCode();
+            string respJson = await response.Content.ReadAsStringAsync();
+            JObject jObj = JsonConvert.DeserializeObject<JObject>(respJson);
+            return jObj;
+        }
+
+    }
 }
