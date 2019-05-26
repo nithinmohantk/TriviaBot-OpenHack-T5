@@ -1,0 +1,11 @@
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\Console.Tester\bin\Debug\netcoreapp2.1\Console.Tester.deps.json
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\Console.Tester\bin\Debug\netcoreapp2.1\Console.Tester.runtimeconfig.json
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\Console.Tester\bin\Debug\netcoreapp2.1\Console.Tester.runtimeconfig.dev.json
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\Console.Tester\bin\Debug\netcoreapp2.1\Console.Tester.dll
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\Console.Tester\bin\Debug\netcoreapp2.1\Console.Tester.pdb
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\Console.Tester\obj\Debug\netcoreapp2.1\Console.Tester.csprojAssemblyReference.cache
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\Console.Tester\obj\Debug\netcoreapp2.1\Console.Tester.csproj.CoreCompileInputs.cache
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\Console.Tester\obj\Debug\netcoreapp2.1\Console.Tester.AssemblyInfoInputs.cache
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\Console.Tester\obj\Debug\netcoreapp2.1\Console.Tester.AssemblyInfo.cs
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\Console.Tester\obj\Debug\netcoreapp2.1\Console.Tester.dll
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\Console.Tester\obj\Debug\netcoreapp2.1\Console.Tester.pdb
