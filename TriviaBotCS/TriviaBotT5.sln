@@ -5,7 +5,9 @@ VisualStudioVersion = 15.0.28307.106
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TriviaBotT5", "TriviaBotT5.csproj", "{15D5D325-3DDC-4FC7-99BA-21151A4856DA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console.Tester", "..\Console.Tester\Console.Tester.csproj", "{28681A28-B0E7-4C8C-BBA9-AC656CFC2B10}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Console.Tester", "..\Console.Tester\Console.Tester.csproj", "{28681A28-B0E7-4C8C-BBA9-AC656CFC2B10}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriviaAPI", "..\TriviaAPI\TriviaAPI.csproj", "{2C12A2D5-2254-410F-9E2E-409F2C726551}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{28681A28-B0E7-4C8C-BBA9-AC656CFC2B10}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{28681A28-B0E7-4C8C-BBA9-AC656CFC2B10}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{28681A28-B0E7-4C8C-BBA9-AC656CFC2B10}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C12A2D5-2254-410F-9E2E-409F2C726551}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C12A2D5-2254-410F-9E2E-409F2C726551}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C12A2D5-2254-410F-9E2E-409F2C726551}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C12A2D5-2254-410F-9E2E-409F2C726551}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

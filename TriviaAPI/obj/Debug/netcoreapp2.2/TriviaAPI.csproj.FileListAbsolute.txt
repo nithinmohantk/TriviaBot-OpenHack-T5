@@ -1,0 +1,14 @@
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\TriviaAPI\obj\Debug\netcoreapp2.2\TriviaAPI.csprojAssemblyReference.cache
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\TriviaAPI\obj\Debug\netcoreapp2.2\TriviaAPI.csproj.CoreCompileInputs.cache
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\TriviaAPI\obj\Debug\netcoreapp2.2\TriviaAPI.RazorAssemblyInfo.cache
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\TriviaAPI\obj\Debug\netcoreapp2.2\TriviaAPI.RazorAssemblyInfo.cs
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\TriviaAPI\obj\Debug\netcoreapp2.2\TriviaAPI.AssemblyInfoInputs.cache
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\TriviaAPI\obj\Debug\netcoreapp2.2\TriviaAPI.AssemblyInfo.cs
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\TriviaAPI\bin\Debug\netcoreapp2.2\TriviaAPI.deps.json
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\TriviaAPI\bin\Debug\netcoreapp2.2\TriviaAPI.runtimeconfig.json
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\TriviaAPI\bin\Debug\netcoreapp2.2\TriviaAPI.runtimeconfig.dev.json
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\TriviaAPI\bin\Debug\netcoreapp2.2\TriviaAPI.dll
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\TriviaAPI\obj\Debug\netcoreapp2.2\TriviaAPI.RazorTargetAssemblyInfo.cache
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\TriviaAPI\bin\Debug\netcoreapp2.2\TriviaAPI.pdb
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\TriviaAPI\obj\Debug\netcoreapp2.2\TriviaAPI.dll
+H:\Workspace\Azure\TriviaBot-OpenHack-T5\TriviaAPI\obj\Debug\netcoreapp2.2\TriviaAPI.pdb

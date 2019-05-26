@@ -12,9 +12,9 @@
     },
     {
       "type": "endpoint",
-      "appId": "1a9ad3ed-46dc-4f0a-b3ce-93401b7a940e",
-      "appPassword": "rsNLES12(]-tnnsqYDG087=",
-      "endpoint": "https://triviabott5v2.azurewebsites.net/api/messages",
+      "appId": "ade8d213-0215-443d-87a5-4026b655a59d",
+      "appPassword": "bryegFVE37)#nnAGGM492|_",
+      "endpoint": "https://trivia-bot-dev.azurewebsites.net/api/messages",
       "id": "9a3fa3a7-7c9f-434f-866a-22af5f9b65ab",
       "name": "production"
     }

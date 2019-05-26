@@ -31,7 +31,7 @@ namespace TriviaBotT5
                 // Logging Options.
                 // Consider using Application Insights for your logging and metrics needs.
                 // https://azure.microsoft.com/en-us/services/application-insights/
-                .UseApplicationInsights("a767fa8c-4f7e-4294-994b-184e393497b4")
+                .UseApplicationInsights("3967b6b6-66a5-4906-9e4b-f171820572a0")
                 .UseStartup<Startup>()
                 .Build();
     }
